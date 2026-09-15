@@ -1,0 +1,4 @@
+interface:
+  display_name: "明明白白调血糖知识系统"
+  short_description: "检索血糖知识，并按安全约束调用 AAPS/Nightscout 工具"
+  default_prompt: "使用 $blood-glucose-management 系统分析这个血糖管理问题，区分来源事实、图表转译、综合推导与需医疗确认的动作；需要读取状态或执行用户明确要求的治疗动作时，遵循内置 AAPS/Nightscout 工具契约。"
