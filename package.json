@@ -1,0 +1,10 @@
+{
+  "name": "sweetonline-agent-skill",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix skills/blood-glucose-management/runtime ci",
+    "build": "npm --prefix skills/blood-glucose-management/runtime run build",
+    "test": "npm --prefix skills/blood-glucose-management/runtime test",
+    "demo": "node skills/blood-glucose-management/scripts/agent.mjs demo"
+  }
+}

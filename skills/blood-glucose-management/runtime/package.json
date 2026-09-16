@@ -1,0 +1,14 @@
+{
+  "name": "@sweetonline/agent-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.13"},
+  "exports": "./dist/index.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs"
+  },
+  "dependencies": {"axios": "1.20.0"},
+  "devDependencies": {"esbuild": "0.25.10", "typescript": "5.8.3"}
+}

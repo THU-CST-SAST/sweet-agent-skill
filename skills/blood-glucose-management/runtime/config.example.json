@@ -1,0 +1,5 @@
+{
+  "model": {"baseUrl": "https://api.deepseek.com", "model": "deepseek-chat", "apiKey": "YOUR_MODEL_API_KEY"},
+  "nightscout": {"url": "https://your-nightscout.example", "authMode": "api-secret"},
+  "relay": {"baseUrl": "https://ai-server.phpjxc.com", "deviceId": "YOUR_DEVICE_ID", "aiKey": "YOUR_DEVICE_AI_KEY"}
+}

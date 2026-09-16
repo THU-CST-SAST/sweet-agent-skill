@@ -10,3 +10,7 @@ data/
 *.log
 *.pem
 *.key
+dist/
+.state/
+config.local.json
+*.tgz

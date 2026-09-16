@@ -1,0 +1,428 @@
+{
+  "repository": "drglucom/sweetonline-drgluapp",
+  "branch": "feature/integrated-agent-simulation",
+  "head": "29665498e6af9ec1de885f629be22a888d908807",
+  "description": "Current working-tree snapshot, including locally edited workflow files. Boundary adaptations are documented separately.",
+  "files": [
+    {
+      "file": "src/agent/agentService.ts",
+      "app_sha256": "f03881a97b5385ac149b7b91ef3653c02a417059971fb78a113326e3c3f77dc7"
+    },
+    {
+      "file": "src/agent/stateBuilder.ts",
+      "app_sha256": "2563f3ef78ad70bf25770e90f359b239fab7cb31faff60795b0c97ca9b794a43"
+    },
+    {
+      "file": "src/agent/reportGenerator.ts",
+      "app_sha256": "305e638fa3821fcfca041b979c3ba56ab69c49feb98e6d245c2ad40de139484b"
+    },
+    {
+      "file": "src/agent/expertRules.ts",
+      "app_sha256": "73fccf27535bd6cfac71b2de693d6fcecb8439fb0d38b6e1d8084b7b21c6d136"
+    },
+    {
+      "file": "src/agent/taskRouter.ts",
+      "app_sha256": "64e01305151605581964d66b5735742b4fea28c4c170a13865c0addcb1720b60"
+    },
+    {
+      "file": "src/agent/types.ts",
+      "app_sha256": "33ef01561979ec7f65a515050897e8b9c28ca952b4356fd52faa4d581d52a3eb"
+    },
+    {
+      "file": "src/agent/zhipuProvider.ts",
+      "app_sha256": "d764a15d03b08d29f7e2c6836a8015311392f3687be19d2016dc8a02964ce09e"
+    },
+    {
+      "file": "src/agent/agentModelConfig.ts",
+      "app_sha256": "c0d59ad7bb3a3bff24e25abea25680835879323ccd92e5254685669758231524"
+    },
+    {
+      "file": "src/agent/patientDecisionState.ts",
+      "app_sha256": "a6f837902b1bacaec2c4b38255d281aba445b9febb2b217d42c70b249dac4eaf"
+    },
+    {
+      "file": "src/agent/decisionEvidence.ts",
+      "app_sha256": "a6f0add7b4f98ec7a6c8b6aa5178158c7bfbf00b5cf4dcfb18c0215485f002c4"
+    },
+    {
+      "file": "src/agent/knowledge.ts",
+      "app_sha256": "e307d542e2748ddcc51fa01453b3d4e67dfc509934f2cf48a3aedc6032c375e6"
+    },
+    {
+      "file": "src/agent/generatedKnowledge.ts",
+      "app_sha256": "fa5d98bb459197906d088a3e8549cf99dda829df784701467cfe379d90a73258"
+    },
+    {
+      "file": "src/agent/generatedSkillKnowledge.ts",
+      "app_sha256": "d06fa1613bd733648d37db1405524ae6c652cee6cce34971b70f65b0bd516fdb"
+    },
+    {
+      "file": "src/agent/simulationClient.ts",
+      "app_sha256": "0301cc4bbbd2de3f967d861089e93bd529346bff585be9a2a3354bafa25350a3"
+    },
+    {
+      "file": "src/agent/aapsTools.ts",
+      "app_sha256": "29308da0ee9c58920e13507ae54e70acec73d8f06dfeed9bab77da9a9c7f760e"
+    },
+    {
+      "file": "src/agent/aapsRelayClient.ts",
+      "app_sha256": "ce7629bf162c73965f918b8a212ebb7d395ec3650bcc9301f6b3ac5e56d91362"
+    },
+    {
+      "file": "src/types/index.ts",
+      "app_sha256": "940ba6ffabc6407ae6bffecd634a589b6e8a6c6a10abb4cbbc626a09d7d9b86f"
+    },
+    {
+      "file": "src/utils/deviceStatusUtils.ts",
+      "app_sha256": "22f652646655d5623c3da9648d912a220c6e7962b1c2309a7bce06191f3c7e61"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/index.ts",
+      "app_sha256": "40ed68bedf5cf775db668a9a0fe749382645796314eb8175efa95b10bcfc4180"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/onlineInput.ts",
+      "app_sha256": "ea15a33f89434be702bff02c5c8bfe067c73cb87133742beff4c19185d1d3f9b"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/onlinePolicy.ts",
+      "app_sha256": "bf05ea1362c6de1b15275e94d7721821bdd00695dadc7178b3fbf8422df42d3b"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/onlineRuntime.ts",
+      "app_sha256": "1539b65f77bc3e811524bf60f4a1f997043789724b5921d6855d64da96350af0"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/scenarioRunner.ts",
+      "app_sha256": "f832f384a22a60109b0385ecad4ab2f1c313b1cfd5f1181370283030f9b14f14"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/LICENSE.md",
+      "app_sha256": "5b786cd1552015d73f9a6e294c4a78fbee89801c998345cfe226e36d624962eb"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/VENDORED.md",
+      "app_sha256": "3037e35ae5866941c0283b9d800c25ddd68a925c94429f3a68c798986d7bd9b4"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/DailyProfile.ts",
+      "app_sha256": "a5924d6c6f551ab1a5212ecc57de6896fbbd655fffd5aceacaf52c5488352ece"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/DateUtility.ts",
+      "app_sha256": "f29c5d1ed1901893d64965f9a5cde83694baa7e457fa97a711bc524875538a32"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/EKF.ts",
+      "app_sha256": "b1af6fe1df2f2d3334761a9538bbe14c7476215b7a6e8bc5037dd5c64eb2a54a"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/Jacobian.ts",
+      "app_sha256": "45af8b029b8d68e85b750097ad2a44947d7292fcbddc6570f86787d91e3a24a8"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/JohnsonTransform.ts",
+      "app_sha256": "640175321cc0b1a71a9603ea082274991c8b86e853e1709deb5e19a041f5c7c2"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/LSESolver.ts",
+      "app_sha256": "14bb2594053f782eda379c670e96da12f02373e4ca9495543950b0a79e1029c7"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/LevenbergMarquardt.ts",
+      "app_sha256": "75e615c14eaaac70b77600dd611d8135edb63c18e6773fa8a7db9c043c2d0f66"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/LinearAlgebra.ts",
+      "app_sha256": "cf085088138f254bae28f0c8e438da46b96c06df42aa35d563f9c823abde2c51"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/NamedVectorUtil.ts",
+      "app_sha256": "92e6848cdce8d66b99905fe0b352129145c3ce826ffed34e7dc5cdf269ccf722"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/NewtonRaphsonSolver.ts",
+      "app_sha256": "385d03a351f22490f5bc2711cdb3b71b5be78afa85764a6b854275fa6b5ae9e2"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/NewtonSolver.ts",
+      "app_sha256": "594847575bd1d43cb4306eac8563b3056f87a06608a2ba8f9be0c3e77442c8e8"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/NoiseAndError.ts",
+      "app_sha256": "b2d79d096f8e2b6462b062d0a953e66a1e39cee8e61d1112685fac1a82b2f4c3"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/Oref0ConsoleLogger.ts",
+      "app_sha256": "cc547cb2e37c59d0b17da6d687310e7fde8ee6591f2e6bb04aa884a75e3482e5"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/Statistics.ts",
+      "app_sha256": "b2c36a1e29ce59d0de5d9ddb3ae781454754d09798b38f09df8f7618350a7d2c"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/SteadyStateFinder.ts",
+      "app_sha256": "40fb197475fb0c4a3a05d0f5f368b51c450b7dae99a45058fd1584093cd99f28"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/UtilityFunctions.ts",
+      "app_sha256": "1c9217bb8f57b53554de79254547c137e8f7ce15a088c6c30ab414b89674c133"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/errors/InvalidResultError.ts",
+      "app_sha256": "3c79d88c9c3652279cc6fad83f03e82a2560004f6f613a45671e7604ba44e9ec"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/random/RNG_MRG32K3A.ts",
+      "app_sha256": "0edaf856312f1326e5ff0ad8397111c9acab54e63adcccd660e1959715a6a306"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/random/RNG_MRG32K3A_Matlab.ts",
+      "app_sha256": "e077861188680eeae3da01f1da03d3b99e7583ae23be17f33b54db42545f3341"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/random/RNG_SHR3.ts",
+      "app_sha256": "472c2f923b5f08851f8ca2d708481c0fd2a23e4624b426a03267ffac9e783179"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/random/RNG_Simulink.ts",
+      "app_sha256": "89343aa4bb29a30237c502ba5cce730b939803564164d56a76f6a0ce8c8bd65f"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/common/random/RNG_Ziggurat_SHR3.ts",
+      "app_sha256": "02cd4eca5129cf9f1cd59f853951004c822177f0c6ee618dd5cdf5c14048d52b"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/AbstractActuator.ts",
+      "app_sha256": "535b86af2a56128d23abdd2214ef4be7d1a11039aa445055691a0b36c87f7de6"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/AbstractController.ts",
+      "app_sha256": "26aad992d3f9cfac1e063a9f53efd6e7a978cad6a21871e1deac9746e395ae08"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/AbstractODEPatient.ts",
+      "app_sha256": "e42544a21a120ed2576b5e848883665053676d0eb5d0b54608e8c7bd6bea9788"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/AbstractParametricModule.ts",
+      "app_sha256": "56808860fc3119f1387845cc32379098f27b2f5710e675b03b83087308754059"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/AbstractSensor.ts",
+      "app_sha256": "b0033b39989bf94aa83f6b37feae39dafc956552c23b678370942c7f9b42a866"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/ControllerUnion.ts",
+      "app_sha256": "acd99b39809e3e447198a395bbd19e225a6881d8557560d7629b55e93e06fb11"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/EventManager.ts",
+      "app_sha256": "f3e9b8aed650c373d33011303aabb4a7a1a3ff8cd3638ddc65826fb7933e5a1e"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/Simulator.ts",
+      "app_sha256": "b30c9a1e607cc86a66d7080c13ce17c098107aa20904abfab5875d5ad955195e"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/actuators/OmnipodDash.ts",
+      "app_sha256": "78566a7cf11fc8e3b61f7e9dec2eeb97d9894e5c11a7b6cd44f4a73d77c6266c"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/actuators/StaticInsulinPump.ts",
+      "app_sha256": "f3118e1172f8c83a95caf4e9ae91ad74c30fcf5504e3a310e90c7777d784b2ee"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/actuators/devices/IdealInsulinPump.json",
+      "app_sha256": "55d96b90e9543adef0a87e755aeddd3615ede45feb491f8aa9d395a768906473"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/actuators/devices/M670G.json",
+      "app_sha256": "eb982a0d575f0a24c0123c60087f3889390b4fc06a5ab96ba9e77e646851eb20"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/actuators/devices/OmnipodDash.json",
+      "app_sha256": "67d90e75821141f2e53c7a8f45f59da15f5521f548a7ad6e3d95cb966c7d30db"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/actuators/devices/Tslim.json",
+      "app_sha256": "daf2be7efdbeb522dc2617a12fc32d21ced176e32897d288c2ceaaeb8f825367"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/BasalBolus.ts",
+      "app_sha256": "474477fb98abb0cba339e21aab645201590526cdecc6307649c42250452cd4d9"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/CSII.ts",
+      "app_sha256": "f0d9c73a8836a4bbf0bb29b6e786b1d1ae0dd6569be13deca1d16fe661774e98"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/CorrectionBolus.ts",
+      "app_sha256": "15200d4e6c8d1f4aad22e669e290ba0d7647994b0a4f76acbb7e18ea236cbd0b"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/MPC_Hovorka2004.ts",
+      "app_sha256": "fc76646eab3de0d30cae1ff0655074bf1f0d2fb68f6c6cfb1ceabb5535955786"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/MealBolus.ts",
+      "app_sha256": "e1ee96e82c970b3e6b94a054d6f4669708a1175faeda6a898e5b9a5a943495e9"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/MealBolusWithCorrection.ts",
+      "app_sha256": "827f4ba98c564a56c4d3492b02a8050567556c698dfb0a72b0e5337fc4217947"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/Oref0.ts",
+      "app_sha256": "9afe029861bfbb092176c85940a8a427c69d9941675771b855e1d58b36ab3ef1"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/controllers/PID.ts",
+      "app_sha256": "67bc3718c3347e11a5e64276c375215bda528ec61c93c7ac5b22453d4f1bf8cb"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/models/Cambridge.ts",
+      "app_sha256": "c7a26ef3f7a972271f7e44412c163fa168bcd157c635bb31954ae5b037b45c7a"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/models/CambridgeJacobs2015.ts",
+      "app_sha256": "301f110d63495142292260c1d2118d6eb212609a4e178942237c7c57d44d53ab"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/models/Deichmann2021.ts",
+      "app_sha256": "85fc723f99ac95b15c7db2204a797236eabf315ea70fa505b057dfd987658c93"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/models/RoyParker2007.ts",
+      "app_sha256": "7d978125da183c40eadac039942ab3a1b9f6740bc51b899d46e1099f28a534ec"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/models/UvaPadova_T1DMS.ts",
+      "app_sha256": "a2316b42ce07773fc980d688cd2c48fc637bb162bda6cbe2863dd06777c0e6c6"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/models/UvaPadova_Visentin2015.ts",
+      "app_sha256": "71fa8bd48b5df85fd19dd645c23ccdd7d6b66d662216e499752c352d076b5c80"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/Breton2008.ts",
+      "app_sha256": "b5f4922442b66a3f0c001e626dde8fe4a89fb2bbfd34247b5cc653d1a5d3aeef"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/Facchinetti2014.ts",
+      "app_sha256": "4649ba9793d706c7b555825e4e010bc3507f205a24a6a86fd07de8425c0b717c"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/IdealCGM.ts",
+      "app_sha256": "1957aad4be4c43f16b7ea8a830527758f0732d698845199e7ae1abc0d2bad4b1"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/IdealSMBG.ts",
+      "app_sha256": "843e7698a47a48b1d3adf52ef8d886c557a8c7177427a485f788d06d7c3064f7"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/Vettoretti2018.ts",
+      "app_sha256": "bda3bbab68da6831d81ca9e8927b3bde24996af734cfec4bb408e882ff4762d7"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/Vettoretti2019.ts",
+      "app_sha256": "9fb270fe6657c3614f7d742a1ca677f745e8d55a3c150cb71d15d7b31a8a1456"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/devices/DexcomG5.json",
+      "app_sha256": "a4b17bc15dcb6a2b6f175a2f19d1d3212067bdf0f956045ac17f09409543d7ff"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/devices/DexcomG6.json",
+      "app_sha256": "6c56fea3d2f51b085bef0f73bed239e1fa89f8eda8a8b332404e0f69bdd5742d"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/devices/DexcomSEVENPlus.json",
+      "app_sha256": "25c51a592fa457235eb51098c021e16deb0dc73140244374b1d183c7026798b4"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/sensors/devices/IdealCGM.json",
+      "app_sha256": "9843c98dd22f56dee675d4025073efdf1e91e0f9f1972988b2ae36586f5318ca"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/solvers/SolverRK1.ts",
+      "app_sha256": "e142bbe398a4ff901acb0283db437ae79642dd36fb2cb647ddabfe8a62d6c775"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/solvers/SolverRK1_2.ts",
+      "app_sha256": "7ccca24d54230f537933d0dbe2da73c348553c319d9bc46c1a88ca73623eb240"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/core/solvers/SolverRK4.ts",
+      "app_sha256": "2b0a8de089d992ca348513c87a06c7efb5052cff7c1411586d3b25210f765aa1"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Actuator.ts",
+      "app_sha256": "a9af01852175c0eb4d3f5fdcfbf8594eb8cf07c23abb0ddd0b4b48c74dc86c8d"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/CommonTypes.ts",
+      "app_sha256": "1ada22c5c8924e22facdd379c2bbea147037370694ab89fa569aa30856af3b9d"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Controller.ts",
+      "app_sha256": "e9cb0239f4cca78e74472ba8b7f81e47a4d33eba1fe677a11ef7585d423c893f"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Exercise.ts",
+      "app_sha256": "e66acabeb0e90e32c7ffac8b6fb40f6f7eb2c93001ae6011b360699664e6c416"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/IOModule.ts",
+      "app_sha256": "a28f146ace43851e6f12c3a5c84c3a30949647252838c57cf3d7187a4061e3f8"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Meal.ts",
+      "app_sha256": "0ad23bd7a96b5c9037d468f9511ea33f99779bcc931bfb8ddf399b6bba60d6c3"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/ModuleProfile.ts",
+      "app_sha256": "f0fca99a5144ee26bc8460953d7653e0c6542d028769d8658e201218e15cd956"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/ODEPatientModel.ts",
+      "app_sha256": "b9801561fff0584742deb21c5752642b6db8ca8ec0007772c4c50a2ea9384ca7"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/ParameterFileContents.ts",
+      "app_sha256": "cae0f975183888f2460ca4b580ef6ec8b8a4b2e4ebb3602f32601d6697c9fed2"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/ParametricModule.ts",
+      "app_sha256": "5e8f414d8a1de8d987163a3e176edeeb98fdb7ec3de85ba0c472ba668700d4e2"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Patient.ts",
+      "app_sha256": "7a247e7dcf174c92304f451a22bf0806713db46bd3fa9d1a37bb82cbd00aa3ff"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/RandomNumberGenerator.ts",
+      "app_sha256": "a865885df34f4a77946af68d5bc67a6e2cf258092f232e60ea346f755879dc06"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Sensor.ts",
+      "app_sha256": "b5855f904f9fff5eebe7c52192c32a73637ddf075778bab15d80774ab4e0df13"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Signals.ts",
+      "app_sha256": "67fa5973c25e27b4f1627898ab12e1f4468140e95e7dc7ec7b008841b8a2e058"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/SimulationResult.ts",
+      "app_sha256": "4041571e52a9f62c3debae77e07a7590a721c4b83bb9915619a9b4726e39f2f2"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/Solver.ts",
+      "app_sha256": "4673a9b761f267f1171275f6f4de9a9f8f49a04a8a89dcf440d24505745e21cd"
+    },
+    {
+      "file": "src/agent/loopinsightKernel/vendor/loopinsight1/src/types/StructureDiagram.ts",
+      "app_sha256": "24077cc6bf703169374284bc5f10ad979d44ff86faa02ce590fd9ba2c6c1197f"
+    }
+  ]
+}
