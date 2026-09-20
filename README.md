@@ -16,8 +16,10 @@
 
 本仓库不需要 React Native App，也不是直接蓝牙设备驱动。宿主可以直接调用内置 CLI，不再需要从 App 绑定工具；NS 用于读取，HTTPS 中转站用于经确认的动作与审计回执。
 
-Node.js >=22.13。仓库根目录运行 `npm run setup`、`npm run build`、`npm test`；`npm run demo` 使用合成患者验证完整本地流程。
-安装时只需完整 skill 目录，其内部安装步骤、模型/NS/设备配置见 [独立运行说明](skills/blood-glucose-management/references/standalone-runtime.md)。
+在 Codex 中使用时，Codex 本身就是负责规划、检索判断和回答的模型，不需要另外配置模型 API。CLI 只执行工具；仅 NS 和中转站按需配置数据源及访问凭据。
+
+Node.js >=22.13。仓库根目录运行 `npm run setup`、`npm run build`、`npm test`；`npm run demo` 使用合成患者返回工具结果，供宿主 Agent 分析，不自行调用模型。
+安装时只需完整 skill 目录，其内部安装步骤、NS/设备配置见 [独立运行说明](skills/blood-glucose-management/references/standalone-runtime.md)。
 
 设备 ID、NS 地址和 API Key 由使用者在运行时配置，不存放在此仓库。没有绑定的工具不得声称已调用；请求受理不等于设备执行成功。
 

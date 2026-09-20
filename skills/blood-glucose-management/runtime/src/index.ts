@@ -21,7 +21,6 @@ export {NightscoutReader} from './runtime/nightscout';
 export {configFromEnv} from './runtime/config';
 
 export function createRuntime(config:RuntimeConfig={},overrides:{relayProvider?:any;fetch?:typeof fetch}={}){
-  if(config.model)requireHttps(config.model.baseUrl);
   const journal=new Journal(stateDirectory(config));
   const actions=toolController(config,journal,overrides.relayProvider);
   const reader=config.nightscout?new NightscoutReader(config.nightscout,overrides.fetch):null;
@@ -71,7 +70,7 @@ export function createRuntime(config:RuntimeConfig={},overrides:{relayProvider?:
     if(call.name==='run_simulation')return simulate(call.arguments);
     if(call.name==='run_scenario')return runLoopInsightScenario(call.arguments);
     if(call.name==='analyze_state'||call.name==='review_safety'){
-      const s=await snapshot(call.arguments);
+      const s=await snapshot({...call.arguments,historyMinutes:call.arguments.historyMinutes??(call.arguments.route==='weekly_report'?10080:1440)});
       const state=buildAgentState({...s,route:call.arguments.route??'current_state',now:new Date(call.arguments.now??s.asOf??Date.now())});
       return call.name==='analyze_state'?state:activeSafetyMessages(state,DEFAULT_EXPERT_RULES);
     }
@@ -83,6 +82,7 @@ export function createRuntime(config:RuntimeConfig={},overrides:{relayProvider?:
     return withContext(context(),()=>runIntegratedSimulation({...s,approvedHypoCarbsG:options.approvedHypoCarbsG??null,evidence:retrieveDecisionEvidence(decision)}));
   }
   async function chat(input:any){
+    if(config.model)requireHttps(config.model.baseUrl);
     if(typeof input.query!=='string'||!input.query.trim())throw Error('query is required');
     const route=routeAgentTask(input.query,input.forcedRoute);
     const s=await snapshot({...input,historyMinutes:input.historyMinutes??(route==='weekly_report'?10080:1440)});

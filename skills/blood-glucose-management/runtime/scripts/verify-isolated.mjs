@@ -18,4 +18,5 @@ const demo=spawnSync(process.execPath,[path.join(installed,'scripts/agent.mjs'),
 if(demo.status!==0)throw Error(demo.stderr);
 const result=JSON.parse(demo.stdout);
 if(!result.synthetic||result.simulation?.plan.candidateCount!==2)throw Error('Isolated CLI workflow did not produce two simulation candidates');
-console.log(JSON.stringify({installedDirectory:installed,isolatedDemo:true,plans:2,provider:result.provider}));
+if(result.orchestration!=='host-agent')throw Error('Demo must use host-agent tools');
+console.log(JSON.stringify({installedDirectory:installed,isolatedDemo:true,plans:2,orchestration:result.orchestration}));

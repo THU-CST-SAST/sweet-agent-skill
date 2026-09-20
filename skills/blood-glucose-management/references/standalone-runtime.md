@@ -19,7 +19,7 @@ npm test
 node scripts/agent.mjs demo
 ```
 
-这只跑合成患者数据。报告或仿真正常返回不意味着医学有效性经过验证。
+这只跑合成患者数据，返回快照、证据候选、统计和仿真，不生成最终回答，也不调用模型 API。由 Codex 等宿主根据结果继续分析。报告或仿真正常返回不意味着医学有效性经过验证。
 
 ## 配置
 
@@ -28,9 +28,6 @@ node scripts/agent.mjs demo
 
 | 配置 | 环境变量 | 用途 |
 |---|---|---|
-| model.baseUrl | LLM_BASE_URL | OpenAI 兼容服务根地址或 /v1 地址，HTTPS |
-| model.model | LLM_MODEL | 服务端真实模型名 |
-| model.apiKey | LLM_API_KEY | 模型密钥 |
 | nightscout.url | NIGHTSCOUT_URL | NS 根地址，HTTPS |
 | nightscout.apiToken | NIGHTSCOUT_TOKEN | 可选认证凭据 |
 | nightscout.authMode | NIGHTSCOUT_AUTH_MODE | api-secret 为原文密钥 SHA-1；token 为 Bearer token |
@@ -39,12 +36,30 @@ node scripts/agent.mjs demo
 | relay.aiKey | AAPS_AI_KEY | 用户指定 AI Key |
 | stateDir | AGENT_STATE_DIR | 私有会话、操作日志目录 |
 
-环境模式下配置模型密钥后，默认模型服务是 DeepSeek / deepseek-chat；其他服务要同时明确 base URL 与模型名。
-未配置 LLM 时使用 App 同源确定性降级，`provider` 和 `workflow` 会体现这一点。
-设置 LLM 即授权将当前任务所需数据发给该提供商；仅配置本人有权使用的数据源。
+宿主模式不需要模型配置，也不是“没有模型的降级”：Codex 本身负责推理和回答。除可选的 `chat` 命令外，CLI 忽略 model 配置和 LLM 环境变量。知识检索和合成数据仿真无需任何 API Key；读取受保护 NS、发送中转站操作才需要对应凭据。仅配置本人有权使用的数据源。
 默认状态目录为用户主目录下 `.local/share/sweetonline-agent`，含 SQLite 会话与发送记录；目录权限 700、文件 600。它不是加密数据库，应由宿主磁盘加密和权限保护。
 
-## 完整 workflow
+## Codex 宿主工作流（默认）
+
+用户向 Codex 提出任务，Codex 读取 SKILL.md 后调用工具，而不是把问题转交给脚本中的另一个模型。工具只输出事实、数值、证据候选或执行回执；任务规划、语义筛选、追问上下文和最终回答由当前 Codex 会话完成。
+
+- 问答：`search` 检索相关资料，读取 reference 核验；不相关则重新检索，再回答用户实际问题。
+- 当前状态：`snapshot` 读取数据；将返回的快照传给 `analyze_state`，检索发现的问题，需要时调用 `simulate` 比较方案。
+- 周报：取 10080 分钟快照，调用 `analyze_state`，指定 `route:weekly_report`，结合知识证据给出总结和建议。历史源用 `asOf:latest` 并明确是历史分析。
+- 操作：宿主选择对应 `tool`，展示精确参数，取得本次确认后调用 `confirm`，随后查询回执。不能把请求受理当作设备执行成功。
+
+例如，将 snapshot 的整个返回对象放入下列 `snapshot` 字段（不是文件路径）：
+
+```json
+{"id":"weekly-1","name":"analyze_state","arguments":{"route":"weekly_report","snapshot":{"entries":[],"treatments":[],"profile":null,"deviceStatus":null,"asOf":"2026-09-01T00:00:00Z"}}}
+```
+
+这里的空数组仅展示结构，实际分析必须传入真实工具结果。也可省略 snapshot，由工具读取已配置的 NS；weekly_report 默认请求 7 天。数据不足时报告覆盖范围，不补造记录。
+
+## 可选：无宿主程序的 chat 模式
+
+只有明确要运行脚本自身的 App 同源模型工作流时才使用本节。它不是 Codex skill 默认入口，不应为普通 skill 使用要求用户配置第二个模型。
+此模式可在私有配置添加 `model:{baseUrl,model,apiKey}`，或设置 `LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY`（HTTPS OpenAI 兼容服务）。环境模式只设置密钥时默认 DeepSeek/deepseek-chat。配置后任务数据会发往指定提供商；不配置时仅运行原 App 确定性回退，不能当作宿主 Agent 行为测试。
 
 ```sh
 printf '%s' '{"query":"帮我检查当前血糖状态，并比较建议方案","sessionId":"patient-a"}' | node scripts/agent.mjs chat
