@@ -5,7 +5,7 @@ import { generateDeterministicNarrative } from './reportGenerator';
 import { buildAgentState } from './stateBuilder';
 import { routeAgentTask } from './taskRouter';
 import type {
-  AgentAnswer,
+  AgentAnswer as BaseAgentAnswer,
   AgentConversationMessage,
   AgentExecutionPlan,
   AgentTaskRoute,
@@ -18,6 +18,8 @@ import {
   narrationProvider,
   planAgentTaskWithModel,
   rerankKnowledgeWithModel,
+  describeAgentModelError,
+  interpretAgentTurn,
 } from './zhipuProvider';
 import { buildPatientDecisionState } from './patientDecisionState';
 import { retrieveDecisionEvidence } from './decisionEvidence';
@@ -30,10 +32,17 @@ import {
   type AapsToolProvider,
   type AapsToolResult,
 } from './aapsTools';
+import { isHistoryReadRequest, requestedHistoryMinutes, isExplicitReadOnly } from './historyReadRequest';
+import { resolveDirectRequest, formatDirectResult } from './directRequest';
+import {needsTaskPlanning} from './workflowPolicy';
+import {currentConversation, type ConversationState, type TurnInterpretation} from './conversationState';
+import {isActionConversation,mergeActionDraft,prepareActionDraft,numberText} from './actionConversation';
 import {
   buildSimulationNarrative,
   runIntegratedSimulation,
 } from './simulationClient';
+
+type AgentAnswer = BaseAgentAnswer & {session?: ConversationState};
 
 export async function answerAgentQuery(input: {
   query: string;
@@ -48,6 +57,7 @@ export async function answerAgentQuery(input: {
   now?: Date;
   aapsProvider?: AapsToolProvider | null;
   confirmedAapsCallIds?: ReadonlySet<string>;
+  session?: ConversationState;
   onToolCalls?: (calls: AapsToolCall[]) => void;
 }): Promise<AgentAnswer> {
   const workflow: AgentWorkflowStep[] = [];
@@ -57,14 +67,22 @@ export async function answerAgentQuery(input: {
     else workflow.push(step);
     input.onProgress?.(workflow.map(item => ({ ...item })));
   };
-  const route = routeAgentTask(input.query, input.forcedRoute);
+  const now = input.now ?? new Date();
+  const session = currentConversation(input.session, now);
+  const modelConfigured = await isZhipuConfigured();
+  let turn:TurnInterpretation|undefined;
+  if(modelConfigured && typeof interpretAgentTurn === 'function' && !input.forcedRoute){
+    record({id:'route',label:'理解对话',status:'running',detail:'结合已有任务理解本轮意图与参数，不重新规划已明确的操作'});
+    try{turn=await interpretAgentTurn({query:input.query,history:input.conversationHistory,session});}
+    catch{record({id:'route',label:'理解对话',status:'failed',detail:'语义理解暂不可用；保留会话参数，不猜测或发送操作'});}
+  }
+  const route = routeAgentTask(input.query, input.forcedRoute ?? (turn?.kind==='analysis'?turn.route:undefined));
   record({
     id: 'route',
     label: '理解任务',
     status: 'completed',
     detail: `识别为“${routeLabel(route)}”任务`,
   });
-  const now = input.now ?? new Date();
   const state = buildAgentState({
     route,
     entries: input.entries,
@@ -74,6 +92,68 @@ export async function answerAgentQuery(input: {
       ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
       : undefined,
   });
+  const getProvider=async()=>input.aapsProvider;
+  if(session && (/^(?:算了|取消|不做了|先不操作)[。！!\s]*$/.test(input.query)||turn?.kind==='cancel')){
+    record({id:'response',label:'取消任务',status:'completed',detail:'取消未提交的会话任务；未向设备发送停止或治疗命令'});
+    return {route,state,sources:[],provider:'deterministic',workflow,text:'已取消本次未提交任务，已清除待补参数。没有向设备发送命令。'};
+  }
+  const normalized=numberText(input.query);
+  let direct = !input.forcedRoute || input.forcedRoute === 'rag_qa'
+    ? resolveDirectRequest(normalized) : null;
+  const continuing = turn ? turn.continuation : session?.kind==='action'&&isActionConversation(input.query,session.action);
+  const actionTurn = turn?.kind==='action' || (!turn && isActionConversation(input.query,continuing?session?.action:undefined));
+  if(actionTurn){
+    const draft=mergeActionDraft(input.query,continuing?session?.action:undefined,turn?.action??null,now);
+    if(draft){
+      record({id:'route',label:'理解操作',status:'completed',detail:'继承已知参数，仅处理本轮补充；不重新生成治疗方案'});
+      record({id:'safety',label:'参数与设备核对',status:'running',detail:'核对参数、参照值、目标设备和必要读数'});
+      const prepared=await prepareActionDraft(draft,await getProvider()??null,now);
+      if(prepared.call)input.onToolCalls?.([prepared.call]);
+      record({id:'safety',label:'参数与设备核对',status:prepared.call?'completed':'skipped',detail:prepared.call?'参数及目标设备已核对，尚未执行':prepared.text});
+      record({id:'response',label:prepared.call?'等待用户确认':'补全任务',status:'completed',detail:'保留上下文与已知参数，不重复询问已经提供的字段'});
+      return {route,state,sources:[],provider:'deterministic',workflow,text:prepared.text,
+        session:{kind:'action',action:prepared.draft,updatedAt:now.toISOString()},
+        ...(prepared.call?{aapsAction:{call:prepared.call,command:prepared.description,status:'requires_user_confirmation' as const}}:{})};
+    }
+  }
+  if(turn?.kind==='knowledge'||turn?.kind==='analysis')direct=null;
+  // Short query follow-ups update the query window, not a new knowledge-search task.
+  const queryContinuation=session?.kind==='query' && (turn?.continuation===true || (!turn && /^(?:那|改成|换成|最近|过去|持续|查)?\s*[\d零一二两三四五六七八九十百]+\s*(?:天|日|周|小时|分钟)[。！!\s]*$/.test(input.query)));
+  const queryTool=turn?.kind==='query'?(turn.queryTool??(queryContinuation?session?.query?.tool:undefined)):queryContinuation?session?.query?.tool:undefined;
+  if(queryTool){
+    const timeText=numberText(turn?.timeEvidence??input.query);
+    const timeFragment=timeText.match(/\d+(?:\.\d+)?\s*(?:天|日|周|小时|分钟)/)?.[0];
+    const minutes=requestedHistoryMinutes(timeText)??(timeFragment?requestedHistoryMinutes(`最近${timeFragment}`):undefined)??(queryContinuation?session?.query?.historyMinutes:undefined)??1440;
+    if(queryTool==='aaps_read_history')direct=/昨天|前天|上周|上个月|\d{4}[-/]\d/.test(timeText)
+      ?{kind:'reply',text:'请求指定了历史日期，不能用截至现在的中转站窗口代替。请明确起止时间，以便使用 NS 历史查询。'}
+      :resolveDirectRequest(`读取最近${minutes}分钟的治疗记录`);
+    else if(queryTool==='aaps_get_operation_status'){
+      const operationId=turn?.operationIdEvidence??(queryContinuation?session?.query?.operationId:undefined);
+      direct=operationId?{kind:'read',call:{id:'query-receipt',name:queryTool,arguments:{operationId}}}:{kind:'reply',text:'请提供要查询的命令 ID；不会重新发送原动作。'};
+    }else direct={kind:'read',call:{id:`query-${queryTool}`,name:queryTool,arguments:{}}};
+  }
+  if(session?.kind==='action'&&!turn&&!actionTurn&&!direct&&!/什么|为什么|如何|怎么|换个话题|另一个问题|分析|建议|周报|日报|读取|查询/.test(input.query)){
+    record({id:'response',label:'澄清本轮补充',status:'completed',detail:'保留未完成任务，没有重建计划或执行命令'});
+    return {route,state,sources:[],provider:'deterministic',workflow,session,text:'已保留上一条操作及其参数，但这句补充的含义还不明确。请说明要修改哪个参数；若不继续，可说“取消”。没有发送命令。'};
+  }
+  if (direct) {
+    record({id: 'route', label: '理解任务', status: 'completed', detail: direct.kind === 'read' ? '直接查询，不需要模型规划' : '直接回复'});
+    let text = direct.kind === 'reply' ? direct.text : '';
+    if(direct.kind==='action')return {route,state,sources:[],provider:'deterministic',workflow,text:'操作意图尚未核实，未生成命令。请明确要操作的设备参数。'};
+    if (direct.kind === 'read') {
+      input.onToolCalls?.([direct.call]);
+      record({id: 'data', label: '读取数据', status: 'running', detail: `调用 ${direct.call.name}`});
+      const provider = input.aapsProvider;
+      const result = provider ? (await executeAapsToolCalls([direct.call], provider))[0] : {
+        tool: direct.call.name, summary: '读取工具未配置', executionStatus: 'failed' as const,
+      };
+      text = formatDirectResult(result, direct.call);
+      record({id: 'data', label: '读取数据', status: result.executionStatus === 'completed' ? 'completed' : 'failed', detail: `${direct.call.name}：${result.summary}`});
+    }
+    record({id: 'response', label: '展示结果', status: 'completed', detail: '保留语义理解结果，直接展示工具数据；无需额外规划或仿真'});
+    return {route, state, sources: [], text, provider: 'deterministic', workflow,
+      ...(direct.kind==='read'?{session:{kind:'query' as const,updatedAt:now.toISOString(),query:{tool:direct.call.name as NonNullable<ConversationState['query']>['tool'],historyMinutes:direct.call.arguments.historyMinutes as number|undefined,operationId:direct.call.arguments.operationId as string|undefined}}}:{})};
+  }
   record({
     id: 'data',
     label: '读取数据',
@@ -98,15 +178,15 @@ export async function answerAgentQuery(input: {
       ? '无需计算患者状态，保留问题上下文'
       : `已计算趋势、覆盖率和风险标记；数据质量 ${state.dataQuality.status}`,
   });
-  const modelConfigured = await isZhipuConfigured();
+  const requiresPlanning = needsTaskPlanning(input.query, route);
   record({
     id: 'planning',
     label: '制定计划',
-    status: 'running',
-    detail: 'Agent 正在决定检索主题和需要调用的工具',
+    status: requiresPlanning ? 'running' : 'skipped',
+    detail: requiresPlanning ? 'Agent 正在决定检索主题和需要调用的工具' : '知识问答直接检索，不调用独立规划模型',
   });
   let executionPlan: AgentExecutionPlan;
-  if (modelConfigured) {
+  if (modelConfigured && requiresPlanning) {
     try {
       executionPlan = await planAgentTaskWithModel({
         route,
@@ -115,13 +195,13 @@ export async function answerAgentQuery(input: {
         conversationHistory: input.conversationHistory,
       });
     } catch (error) {
-      console.warn('[Agent] model planning failed; using bounded fallback plan');
+      console.warn('[Agent] model planning failed; using bounded fallback plan', describeAgentModelError?.(error));
       executionPlan = fallbackExecutionPlan(route, input.query, state);
     }
   } else {
     executionPlan = fallbackExecutionPlan(route, input.query, state);
   }
-  const requestedAapsTools = buildAapsToolSelection(input.query, route);
+  const requestedAapsTools = requiresPlanning ? buildAapsToolSelection(input.query, route) : [];
   executionPlan = {
     ...executionPlan,
     tools: [...new Set([...executionPlan.tools, ...requestedAapsTools])],
@@ -129,14 +209,26 @@ export async function answerAgentQuery(input: {
   record({
     id: 'planning',
     label: '制定计划',
-    status: 'completed',
-    detail: `${executionPlan.planner === 'model' ? '模型规划' : '本地兜底规划'}：${executionPlan.searchQueries.length} 个检索任务，工具 ${executionPlan.tools.join('、')}`,
+    status: requiresPlanning ? 'completed' : 'skipped',
+    detail: requiresPlanning ? `${executionPlan.planner === 'model' ? '模型规划' : '本地兜底规划'}：${executionPlan.searchQueries.length} 个检索任务，工具 ${executionPlan.tools.join('、')}` : '知识问答：检索资料后直接回答',
   });
-  const plannedAapsCalls = executionPlan.toolCalls;
+  const plannedAapsCalls = executionPlan.toolCalls.filter(call => !isExplicitReadOnly(input.query)
+    || call.name.startsWith('aaps_read_') || call.name === 'aaps_get_operation_status');
   const fallbackAapsTools = requestedAapsTools.filter(tool => executionPlan.tools.includes(tool));
   const aapsCalls = plannedAapsCalls.length
     ? plannedAapsCalls
     : buildFallbackAapsToolCalls(input.query, fallbackAapsTools);
+  if (requestedAapsTools.includes('aaps_read_history')
+    && !aapsCalls.some(call => call.name === 'aaps_read_history')) {
+    aapsCalls.push(...buildFallbackAapsToolCalls(input.query, ['aaps_read_history']));
+  }
+  const historyMinutes = requestedHistoryMinutes(input.query);
+  for (const call of aapsCalls) {
+    if (call.name === 'aaps_read_history' && historyMinutes !== undefined) {
+      call.arguments = { ...call.arguments, historyMinutes };
+    }
+  }
+  executionPlan = { ...executionPlan, toolCalls: aapsCalls };
   input.onToolCalls?.(aapsCalls);
   let aapsResults: AapsToolResult[] = [];
   if (aapsCalls.length) {
@@ -160,7 +252,7 @@ export async function answerAgentQuery(input: {
       id: 'data',
       label: '读取数据',
       status: aapsResults.some(result => result.executionStatus === 'failed') ? 'failed' : 'completed',
-      detail: summarizeAapsToolResults(aapsResults).replace(/^Agent 工具调用：\n?/, '') || 'AAPS 工具调用完成',
+      detail: aapsResults.map(result => `${result.tool}：${result.summary}`).join('\n'),
     });
   }
   record({
@@ -173,7 +265,7 @@ export async function answerAgentQuery(input: {
     searchKnowledgeCandidates(item.query, 12),
   )).slice(0, 24);
   let plannedSources: ReturnType<typeof searchKnowledgeCandidates>;
-  if (modelConfigured && retrievalCandidates.length) {
+  if (modelConfigured && requiresPlanning && retrievalCandidates.length) {
     try {
       plannedSources = await rerankKnowledgeWithModel({
         query: input.query,
@@ -182,7 +274,7 @@ export async function answerAgentQuery(input: {
         limit: 6,
       });
     } catch (error) {
-      console.warn('[Agent] semantic reranking failed; using lexical ranking');
+      console.warn('[Agent] semantic reranking failed; using lexical ranking', describeAgentModelError?.(error));
       plannedSources = retrievalCandidates.slice(0, 6);
     }
   } else {
@@ -277,7 +369,8 @@ export async function answerAgentQuery(input: {
     detail: safety.length ? `触发 ${safety.length} 条安全提示` : '未触发额外安全提示',
   });
   const aapsToolDraft = summarizeAapsToolResults(aapsResults);
-  const deterministicDraft = [aapsToolDraft, ...safety, base].filter(Boolean).join('\n\n');
+  const historyOnly = route === 'rag_qa' && isHistoryReadRequest(input.query);
+  const deterministicDraft = (historyOnly ? [aapsToolDraft] : [aapsToolDraft, ...safety, base]).filter(Boolean).join('\n\n');
   const pendingResult = aapsResults.find(result =>
     result.executionStatus === 'requires_user_confirmation' && result.callId,
   );
@@ -321,12 +414,12 @@ export async function answerAgentQuery(input: {
     record({ id: 'response', label: '组织回答', status: 'completed', detail: '已完成回答并保留确定性数值' });
     return { route, state, sources, text, provider: await narrationProvider(), workflow, aapsAction };
   } catch (error) {
-    console.warn('[Agent] model narration failed; using deterministic fallback');
+    console.warn('[Agent] model request failed; using deterministic fallback', describeAgentModelError?.(error));
     record({
       id: 'response',
       label: '组织回答',
       status: 'failed',
-      detail: '模型调用失败，已切换到本地确定性结果',
+      detail: `${describeAgentModelError(error)}，已切换到本地确定性结果`,
     });
     return {
       route,
@@ -353,6 +446,17 @@ export async function executeConfirmedAapsToolCall(
       executionStatus: 'failed',
       executed: false,
     };
+  }
+  if (call.arguments.expectedDeviceId) {
+    try {
+      const status=await resolvedProvider.invoke({id:`${call.id}:preflight`,name:'aaps_read_pump_status',arguments:{requireRelay:true}});
+      const seen=Date.parse(String(status.data?.last_seen??''));
+      if(status.status!=='succeeded'||status.data?.source!=='aaps_relay'||status.data?.device_id!==call.arguments.expectedDeviceId
+        ||status.data?.offline===true||!Number.isFinite(seen)||Date.now()-seen>5*60000||seen>Date.now()+60000
+        ||(call.name!=='aaps_record_carbs'&&status.data?.pump_connected!==true)){
+        return {tool:call.name,callId:call.id,executed:false,executionStatus:'failed',summary:'确认时目标设备状态已变化或无法核验，未发送治疗命令，请重新核对。'};
+      }
+    }catch{return {tool:call.name,callId:call.id,executed:false,executionStatus:'failed',summary:'确认时设备状态核对失败，未发送治疗命令。'};}
   }
   return (await executeAapsToolCalls([call], resolvedProvider, new Set([call.id])))[0];
 }

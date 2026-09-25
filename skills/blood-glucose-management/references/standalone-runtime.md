@@ -68,8 +68,17 @@ printf '%s' '{"query":"上面提到的IOB是什么？","sessionId":"patient-a"}'
 ```
 
 固定 `sessionId` 保留最近 24 条消息。会话按 NS/设备配置隔离。一个会话应串行发送消息。
+同一 `sessionId` 还保存查询窗口和待补全的操作参数，进程退出后仍可继续；任务参数超过 15 分钟不自动复用。新的会话请求使旧的待确认卡失效，已提交操作不因此重发或撤销。`算了`取消的是未提交任务，不是向泵发送停止命令。
+
+操作准备会核对中转站设备标识、连接状态及时间戳。相对当前执行值的调整还必须取得可核验的当前基础率；如果接口没有提供它，只说明缺失，不用 Profile 计划值或算法建议值代替。`pending` 仍需查询原命令回执，不能当作执行成功。
 可选 `forcedRoute`：`rag_qa`、`current_state`、`daily_report`、`weekly_report`。不传则使用与 App 一致的路由。
-默认读取 24 小时；周报读取 7 天。可用 `historyMinutes` 指定，最多 31 天。
+默认读取 24 小时；周报读取 7 天。NS 快照最多 31 天。当前中转站治疗历史最多 30 天，条数上限默认 500，可用 `limit` 指定至 1000；达到上限时返回 `possiblyTruncated`。
+
+`aaps_read_history` 不指定 `asOf` 时优先读中转站，失败或为空时回退 NS，结果包含来源。指定 `asOf`（包括 `latest`）时保留 NS 回放语义；不会把当前设备历史与过去快照混合。中转站只代表可见治疗记录，不保证完整，不能把空记录解释为未治疗。
+
+```bash
+printf '%s' '{"id":"history-30d","name":"aaps_read_history","arguments":{"historyMinutes":43200}}' | node scripts/agent.mjs tool
+```
 默认以当前时间为锚点；历史数据源可传 `asOf: "latest"`，或明确 ISO 时间。此时答案属于历史快照分析，不是当前患者状态。
 可传 `snapshot` 直接使用离线 JSON `{entries,treatments,profile,deviceStatus,asOf?}`，不要混入其他患者快照。
 

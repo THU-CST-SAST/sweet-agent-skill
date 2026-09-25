@@ -62,10 +62,17 @@ export class AapsRelayClient implements AapsToolProvider {
   }
 
   async invoke(call: AapsToolCall): Promise<AapsProviderResult> {
+    if(call.name==='aaps_read_pump_status'){
+      const data=await this.testConnection();
+      if(data.device_id!==this.deviceId)throw Error('Relay returned a different device');
+      return {status:'succeeded',summary:'Read target device status from relay',data:{...data,source:'aaps_relay'}};
+    }
+    if (call.name === 'aaps_read_history') return this.readTreatments(call);
     if (call.name === 'aaps_get_operation_status') {
       return this.readOperationStatus(call.arguments.operationId);
     }
     const cmd = commandForToolCall(call);
+    if(call.arguments.expectedDeviceId!==undefined&&call.arguments.expectedDeviceId!==this.deviceId)throw Error('Target device changed; confirm again');
     const confidence = numberArgument(call.arguments.confidence, 1);
     const reason = stringArgument(call.arguments.reason)
       || `用户确认 Agent 执行 ${cmd}`;
@@ -116,6 +123,29 @@ export class AapsRelayClient implements AapsToolProvider {
       summary: failed ? '设备报告命令执行失败。' : '设备已执行命令并返回结果。',
       data,
       ...(failed ? { errorCode: terminal.action } : {}),
+    };
+  }
+
+  private async readTreatments(call: AapsToolCall): Promise<AapsProviderResult> {
+    const minutes = call.arguments.historyMinutes ?? 1440;
+    const limit = call.arguments.limit ?? 500;
+    if (typeof minutes !== 'number' || !Number.isFinite(minutes) || minutes < 1
+      || minutes > 43200 || typeof limit !== 'number' || !Number.isInteger(limit)
+      || limit < 1 || limit > 1000) throw new Error('Invalid treatment history window or limit');
+    const response = await axios.get<RelayEnvelope<Record<string, unknown>>>(
+      `${this.deviceUrl}/treatments`,
+      {headers: this.headers, params: {hours: Math.ceil(minutes / 60), limit}, timeout: 15000, maxRedirects: 0},
+    );
+    const data = response.data.data;
+    if (response.data.status !== 'ok' || !isRecord(data) || !Array.isArray(data.treatments)
+      || data.device_id !== this.deviceId || !data.treatments.every(isRecord)) {
+      throw new Error('Invalid relay treatment history or mismatched device ID');
+    }
+    return {status: 'succeeded',
+      summary: `Read ${data.treatments.length} relay-visible treatments; this is not guaranteed to cover all AAPS treatments.`,
+      data: {...data, source: 'aaps_relay', fetchedAt: new Date().toISOString(),
+        requestedHistoryMinutes: minutes, queriedHours: Math.ceil(minutes / 60),
+        possiblyTruncated: data.treatments.length >= limit, coverage: 'relay_visible_history_only'},
     };
   }
 

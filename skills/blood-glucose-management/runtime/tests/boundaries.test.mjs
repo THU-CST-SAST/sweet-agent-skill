@@ -78,19 +78,20 @@ test('model plans tools, reranks evidence, narrates, and receives persisted conv
   axios.defaults.adapter=async config=>{
     const body=JSON.parse(config.data);const system=body.messages[0].content;prompts.push(body.messages);
     let content;
-    if(system.includes('规划器')){stages.push('planning');content=JSON.stringify({objective:'Read and record requested carbs',searchQueries:[{purpose:'topic',query:'碳水'},{purpose:'safety',query:'工具确认 安全'}],tools:['search_knowledge'],toolCalls:[{id:'model-action',name:'aaps_record_carbs',arguments:{carbsG:2}}],recommendationFocus:['Check receipt']});}
+    if(system.includes('对话理解器')){stages.push('understanding');content=JSON.stringify({kind:'analysis',continuation:false});}
+    else if(system.includes('规划器')){stages.push('planning');content=JSON.stringify({objective:'Read and record requested carbs',searchQueries:[{purpose:'topic',query:'碳水'},{purpose:'safety',query:'工具确认 安全'}],tools:['search_knowledge'],toolCalls:[{id:'model-action',name:'aaps_record_carbs',arguments:{carbsG:2}}],recommendationFocus:['Check receipt']});}
     else if(system.includes('重排器')){stages.push('reranking');const candidates=JSON.parse(body.messages[1].content.split('候选材料：')[1]);content=JSON.stringify({selectedIds:candidates.slice(0,2).map(c=>c.id),reason:'test'});}
     else{stages.push('narration');content='已查阅资料；记录 2 克碳水等待确认，尚未执行。';}
     return {data:{choices:[{message:{content},finish_reason:'stop'}]},status:200,statusText:'OK',headers:{},config};
   };
   let posts=0;const r=createRuntime({stateDir:dir(),relay,model:{baseUrl:'https://llm.example/v1',model:'test-model',apiKey:'test-only'}},{relayProvider:{invoke:async()=>{posts++;return {status:'pending',operationId:'queued'}}}});
   try{
-    const a=await r.chat({query:'请记录2克碳水',sessionId:'conversation',snapshot:createSyntheticSimulationInput()});
-    assert.deepEqual(stages,['planning','reranking','narration']);assert.equal(a.pendingActions.length,1);assert.equal(posts,0);
+    const a=await r.chat({query:'请先分析碳水记录再准备记录2克碳水',sessionId:'conversation',snapshot:createSyntheticSimulationInput()});
+    assert.deepEqual(stages,['understanding','planning','reranking','narration']);assert.equal(a.pendingActions.length,1);assert.equal(posts,0);
     assert.equal(a.pendingActions[0].executionStatus,'requires_user_confirmation');
     await r.confirm(a.pendingActions[0].confirmationId);assert.equal(posts,1);
     await r.chat({query:'上一条是什么',sessionId:'conversation',snapshot:createSyntheticSimulationInput()});
-    assert(JSON.stringify(prompts[3]).includes('请记录2克碳水'));
+    assert(JSON.stringify(prompts[4]).includes('请先分析碳水记录再准备记录2克碳水'));
   }finally{axios.defaults.adapter=original;r.close();}
 });
 test('real relay adapter serializes all five actions and retains server safety checks',async()=>{
@@ -104,9 +105,10 @@ test('real relay adapter serializes all five actions and retains server safety c
 });
 
 test('model-requested earlier and later Profile anchors refetch rather than reuse chat state',async()=>{
-  const original=axios.defaults.adapter;let target='2026-08-31T12:00:00Z';let requests=0;
+  const original=axios.defaults.adapter;let target='2026-08-31T12:00:00Z';let requests=0;let answerContext='';
   axios.defaults.adapter=async config=>{
     const body=JSON.parse(config.data),system=body.messages[0].content;
+    if(!system.includes('规划器')&&!system.includes('重排器'))answerContext=body.messages[1].content;
     const content=system.includes('规划器')?JSON.stringify({objective:'read historical profile',searchQueries:[{purpose:'profile',query:'Profile配置'}],tools:['search_knowledge'],toolCalls:[{id:'anchor',name:'aaps_read_profile',arguments:{asOf:target}}],recommendationFocus:[]}):system.includes('重排器')?JSON.stringify({selectedIds:JSON.parse(body.messages[1].content.split('候选材料：')[1]).slice(0,1).map(c=>c.id)}):'历史配置已读取。';
     return {data:{choices:[{message:{content},finish_reason:'stop'}]},status:200,statusText:'OK',headers:{},config};
   };
@@ -116,6 +118,6 @@ test('model-requested earlier and later Profile anchors refetch rather than reus
   try{for(const [asOf,expected] of [['2026-08-31T12:00:00Z','earlier'],['2026-09-02T12:00:00Z','later']]){
     target=asOf;
     const result=await r.chat({query:'请读取指定日期Profile',forcedRoute:'rag_qa',snapshot:{entries:[],treatments:[],profile:{id:'initial'},deviceStatus:null,asOf:'2026-09-01T12:00:00Z',rangeStart:'2026-08-30T00:00:00Z',sourceUrl:'https://ns.example'}});
-    assert(result.workflow.find(s=>s.id==='data').detail.includes(`\"id\":\"${expected}\"`),expected);
+    assert(answerContext.includes(`\"id\":\"${expected}\"`),expected);
   }assert(requests>=8);}finally{axios.defaults.adapter=original;r.close();}
 });

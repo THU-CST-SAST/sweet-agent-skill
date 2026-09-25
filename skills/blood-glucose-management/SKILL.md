@@ -7,6 +7,8 @@ description: 系统检索、解释与审慎应用《明明白白调血糖（第2
 
 ## 独立运行工具与完整工作流
 
+保留上下文理解和任务状态，只跳过当前任务不需要的步骤：查询调用读取工具；知识问答检索后回答；分析和建议按需规划与仿真；明确的操作补全参数、核对设备，再等待确认。宿主模式由宿主模型理解对话；可选 `chat` 模式会使用所配置模型理解追问，并保存尚未完成的操作和查询窗口。模型不可用时有有限的本地识别回退，但不能猜测缺失参数。
+
 本目录包含可执行 runtime，不需要安装或启动 App。需要 Node.js 22.13+ 和 npm。
 首次运行在本 skill 的 `runtime/` 目录执行 `npm ci`、`npm run build`；后续从 skill 根目录调用 `node scripts/agent.mjs`。
 详细配置、JSON 工具参数、对话历史、仿真、确认和回执见 [独立运行说明](references/standalone-runtime.md)。
@@ -15,6 +17,7 @@ description: 系统检索、解释与审慎应用《明明白白调血糖（第2
 - 知识问答：根据对话上下文构造 `search` 查询，检查候选资料并读取相关 reference；不相关时改写查询，不能把首条检索结果直接当答案。追问沿用宿主对话上下文。
 - 状态分析和建议：用 `snapshot` 取数、`tool` 的 `analyze_state` 计算，再按发现的问题检索资料；需要比较方案时调用 `simulate` 或 `scenario`，解释实际返回的曲线和限制。计算工具负责数值，不替代你的分析。
 - 周报：读取 `historyMinutes:10080` 的数据，调用 `analyze_state` 并指定 `route:weekly_report`；结合检索证据形成总结和后续建议，说明数据缺口。复用同一快照和时间锚点，避免不同患者或时段混用。
+- 当前治疗历史：调用 `aaps_read_history`，不指定 `asOf` 时优先读取中转站 `/treatments`，失败或空记录时回退 NS。检查 `source`、`coverage`、`fallbackReason` 和 `possiblyTruncated`；中转站可见记录不保证等于 AAPS 全部治疗历史。指定 `asOf` 或使用历史快照时仍用 NS，不混入当前中转站记录。不可把未核实属于同一患者的 NS 和设备记录相加。
 - 使用 `snapshot`、`search`、`simulate`、`scenario`、`tool` 返回的真实 JSON 继续工作，说明实际做了哪些查询、分析和测试。工具不依赖 App 或手机存储。`demo` 仅返回合成数据、证据候选、统计与仿真，最终解释由你完成，不能冒充患者数据。
 - `chat` 仅用于用户明确选择的无宿主独立程序/App 同源对照模式；其中的外部模型配置不是安装或使用本 skill 的前提。
 - 治疗操作先返回 `confirmationId` 和精确参数。只有用户确认对应设备、操作和数值后才能调用 `confirm`。收到 `pending` 后用原 `operationId` 查询，不能重发原动作；`unknown` 也不能自动重试。

@@ -14,7 +14,8 @@ export class Journal {
     const filename=path.join(dir,'runtime.sqlite');this.db=new DatabaseSync(filename);chmodSync(filename,0o600);
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS actions(id TEXT PRIMARY KEY,call_id TEXT NOT NULL,binding TEXT NOT NULL,payload TEXT NOT NULL,status TEXT NOT NULL,result TEXT,created INTEGER NOT NULL,UNIQUE(binding,call_id));
-      CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,history TEXT NOT NULL);`);
+      CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,history TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS task_sessions(id TEXT PRIMARY KEY,state TEXT NOT NULL);`);
   }
   prepare(call:any,binding:string){
     const payload=canonical(JSON.parse(JSON.stringify(call))),old=this.db.prepare('SELECT * FROM actions WHERE binding=? AND call_id=?').get(binding,call.id) as any;
@@ -31,7 +32,16 @@ export class Journal {
     if(Date.now()-Number(row.created)>15*60000)throw Error('Confirmation expired; create a fresh request');
     return this.db.prepare("UPDATE actions SET status='sending' WHERE id=? AND binding=? AND status='awaiting_confirmation'").run(id,binding).changes===1;
   }
-  finish(id:string,result:any){this.db.prepare('UPDATE actions SET status=?,result=? WHERE id=?').run(result.executionStatus,JSON.stringify(result),id);}
+  finish(id:string,result:any){
+    this.db.prepare('UPDATE actions SET status=?,result=? WHERE id=?').run(result.executionStatus,JSON.stringify(result),id);
+    for(const row of this.db.prepare('SELECT id,state FROM task_sessions').all() as any[]){
+      const task=JSON.parse(row.state);
+      if(task.confirmationIds?.includes(id))this.saveTask(row.id,{});
+    }
+  }
+  task(id:string){const row=this.db.prepare('SELECT state FROM task_sessions WHERE id=?').get(id) as any;return row?JSON.parse(row.state):{};}
+  saveTask(id:string,state:any){this.db.prepare('INSERT INTO task_sessions VALUES(?,?) ON CONFLICT(id) DO UPDATE SET state=excluded.state').run(id,JSON.stringify(state));}
+  supersede(id:string,binding:string){this.db.prepare("UPDATE actions SET status='superseded' WHERE id=? AND binding=? AND status='awaiting_confirmation'").run(id,binding);}
   history(id:string){const r=this.db.prepare('SELECT history FROM sessions WHERE id=?').get(id) as any;return r?JSON.parse(r.history):[];}
   saveHistory(id:string,history:any[]){this.db.prepare('INSERT INTO sessions VALUES(?,?) ON CONFLICT(id) DO UPDATE SET history=excluded.history').run(id,JSON.stringify(history.slice(-24)));}
   close(){this.db.close();}

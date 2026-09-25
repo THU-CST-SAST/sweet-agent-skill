@@ -9,7 +9,13 @@ test('all four App routes match original-source answers and evidence',async()=>{
   const runtime=createRuntime({stateDir:fs.mkdtempSync(path.join(os.tmpdir(),'parity-'))});
   try{for(const entry of golden.answers){
     const actual=await runtime.chat({query:entry.query,forcedRoute:entry.route,now:golden.now,snapshot:golden.snapshot});
-    for(const field of ['route','state','sources','text','provider'])assert.deepEqual(actual[field],entry.answer[field],`${entry.route}.${field}`);
+    for(const field of ['route','state','sources','text','provider']){
+      // Knowledge-only questions no longer fetch or prepend irrelevant device data.
+      const expected=entry.route==='rag_qa'&&field==='text'
+        ?entry.answer.text.replace(/^Agent 工具调用：[\s\S]*?\n\n(?=结论：)/,'')
+        :entry.answer[field];
+      assert.deepEqual(actual[field],expected,`${entry.route}.${field}`);
+    }
   }}finally{runtime.close();}
 });
 test('two-plan curves and every simulation output match original App exactly',async()=>{

@@ -13,7 +13,8 @@ export function validateCall(call:any){
     if(['insulinU','carbsG','durationMinutes'].includes(k)&&v<=0)throw Error(`${k} must be positive`);
     if(k==='durationMinutes'&&(!Number.isInteger(v)||v>1440))throw Error('durationMinutes must be an integer <=1440');
   }
-  if(Object.keys(call.arguments).some(k=>![...fields[call.name],'reason','confidence'].includes(k)))throw Error('Unexpected action parameters');
+  if(Object.keys(call.arguments).some(k=>![...fields[call.name],'reason','confidence','expectedDeviceId'].includes(k)))throw Error('Unexpected action parameters');
+  if(call.arguments.expectedDeviceId!==undefined&&(typeof call.arguments.expectedDeviceId!=='string'||!call.arguments.expectedDeviceId.trim()))throw Error('Invalid device binding');
   if(call.arguments.reason!==undefined&&(typeof call.arguments.reason!=='string'||call.arguments.reason.length>4000))throw Error('Invalid reason');
   if(call.arguments.confidence!==undefined&&(typeof call.arguments.confidence!=='number'||!Number.isFinite(call.arguments.confidence)||call.arguments.confidence<0||call.arguments.confidence>1))throw Error('Invalid confidence');
   // The relay encodes percent vs absolute rate in one string. Integer absolute rates are ambiguous.
@@ -33,7 +34,7 @@ export function toolController(config:RuntimeConfig,journal:Journal,relayOverrid
   async function confirm(id:string){
     if(!relay)throw Error('AAPS relay is not configured');
     const row=journal.get(id,binding),call=JSON.parse(row.payload);validateCall(call);
-    if(!journal.claim(id,binding)){const existing=journal.get(id,binding);return existing.result?JSON.parse(existing.result):{executionStatus:'unknown',executed:false,summary:'A previous process claimed this POST. Do not resend; reconcile the relay audit.'};}
+    if(!journal.claim(id,binding)){const existing=journal.get(id,binding);return existing.result?JSON.parse(existing.result):{executionStatus:existing.status==='superseded'?'failed':'unknown',executed:false,summary:existing.status==='superseded'?'This confirmation was invalidated by a newer conversation turn.':'A previous process claimed this POST. Do not resend; reconcile the relay audit.'};}
     let result;
     try{const r=await relay.invoke(call);result={tool:call.name,callId:call.id,operationId:r.operationId,executionStatus:r.status==='succeeded'?'completed':r.status,executed:r.status==='succeeded',summary:r.summary,data:r.data};}
     catch(e:any){result={tool:call.name,callId:call.id,executionStatus:'unknown',executed:false,summary:`Transport did not establish a terminal outcome${e.response?.status?` (HTTP ${e.response.status})`:''}; do not automatically resend`};}
